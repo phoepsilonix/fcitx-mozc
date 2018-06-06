@@ -132,6 +132,18 @@ class ZeroQueryDict {
       return tmp;
     }
 
+    iterator &operator--() {
+      ptr_ -= kTokenByteSize;
+      return *this;
+    }
+
+    iterator operator--(int) {
+      const iterator tmp(ptr_, string_array_);
+      ptr_ -= kTokenByteSize;
+      return tmp;
+    }
+
+
     iterator &operator+=(ptrdiff_t n) {
       ptr_ += n * kTokenByteSize;
       return *this;
