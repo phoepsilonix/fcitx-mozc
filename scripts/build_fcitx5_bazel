@@ -1,3 +1,3 @@
 #!/bin/sh
 
-bazel build -c opt --copt=-fPIC  --config oss_linux  unix/fcitx5:fcitx5-mozc.so server:mozc_server gui/tool:mozc_tool
+bazel build --config oss_linux -c opt --copt "-fPIC" --linkopt "${LDFLAGS}" unix/fcitx5:fcitx5-mozc.so server:mozc_server gui/tool:mozc_tool
