@@ -37,11 +37,6 @@
 #include <utility>
 #include <vector>
 
-#include "converter/connector.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/segmenter.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -57,6 +52,11 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/connector.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segmenter.h"
+#include "converter/segments.h"
 
 namespace mozc::prediction {
 namespace dictionary_predictor_internal {
@@ -106,6 +106,7 @@ class DictionaryPredictor : public PredictorInterface {
   class ResultFilter {
    public:
     ResultFilter(const ConversionRequest &request, const Segments &segments,
+                 dictionary::PosMatcher pos_matcher,
                  const SuggestionFilter &suggestion_filter
                      ABSL_ATTRIBUTE_LIFETIME_BOUND);
     bool ShouldRemove(const Result &result, int added_num,
@@ -117,9 +118,11 @@ class DictionaryPredictor : public PredictorInterface {
 
     const std::string input_key_;
     const size_t input_key_len_;
+    const dictionary::PosMatcher pos_matcher_;
     const SuggestionFilter &suggestion_filter_;
     const bool is_mixed_conversion_;
     const bool include_exact_key_;
+    const bool filter_number_;
 
     std::string history_key_;
     std::string history_value_;

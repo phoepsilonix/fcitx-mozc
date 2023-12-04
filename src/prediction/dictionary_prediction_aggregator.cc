@@ -44,11 +44,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/node_list_builder.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -66,6 +61,11 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/composer.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/node_list_builder.h"
+#include "converter/segments.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -429,11 +429,13 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
     : public DictionaryInterface::Callback {
  public:
   PrefixLookupCallback(size_t limit, int kanji_number_id, int unknown_id,
-                       int min_value_chars_len, std::vector<Result> *results)
+                       int min_value_chars_len, int input_key_len,
+                       std::vector<Result> *results)
       : limit_(limit),
         kanji_number_id_(kanji_number_id),
         unknown_id_(unknown_id),
         min_value_chars_len_(min_value_chars_len),
+        input_key_len_(input_key_len),
         results_(results) {}
 
   PrefixLookupCallback(const PrefixLookupCallback &) = delete;
@@ -468,7 +470,11 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
     if (key != actual_key) {
       result.candidate_attributes |= Segment::Candidate::TYPING_CORRECTION;
     }
-    result.consumed_key_size = Util::CharsLen(key);
+    const int key_len = Util::CharsLen(key);
+    if (key_len < input_key_len_) {
+      result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result.consumed_key_size = Util::CharsLen(key);
+    }
     results_->emplace_back(result);
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
@@ -478,6 +484,7 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
   const int kanji_number_id_;
   const int unknown_id_;
   const int min_value_chars_len_;
+  const int input_key_len_;
   std::vector<Result> *results_;
 };
 
@@ -1670,8 +1677,10 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
     result.key = input_key.substr(0, decode_result.consumed_key_byte_len);
     result.value = std::move(decode_result.candidate);
     result.candidate_attributes |= Segment::Candidate::NO_SUGGEST_LEARNING;
-    // Heuristic small cost: 1000 ~= 500 * log(10)
-    result.wcost = 1000;
+    // Heuristic cost:
+    // Large digit number (1億, 1兆, etc) should have larger cost
+    // 1000 ~= 500 * log(10)
+    result.wcost = 1000 * (1 + decode_result.digit_num);
     result.lid = is_arabic ? number_id_ : kanji_number_id_;
     result.rid = is_arabic ? number_id_ : kanji_number_id_;
     if (decode_result.consumed_key_byte_len < input_key.size()) {
@@ -1695,24 +1704,28 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
     return;
   }
 
-  std::string input_key;
-  if (request.has_composer()) {
-    request.composer().GetQueryForPrediction(&input_key);
-  } else {
-    input_key = segments.conversion_segment(0).key();
-  }
+  const std::string &input_key = [&]() {
+    std::string ret;
+    if (request.has_composer()) {
+      request.composer().GetQueryForPrediction(&ret);
+    } else {
+      ret = segments.conversion_segment(0).key();
+    }
+    return ret;
+  }();
 
   const size_t input_key_len = Util::CharsLen(input_key);
   if (input_key_len <= 1) {
     return;
   }
   // Excludes exact match nodes.
-  Util::Utf8SubString(input_key, 0, input_key_len - 1, &input_key);
+  absl::string_view lookup_key =
+      Util::Utf8SubString(input_key, 0, input_key_len - 1);
 
   constexpr int kMinValueCharsLen = 2;
   PrefixLookupCallback callback(cutoff_threshold, kanji_number_id_, unknown_id_,
-                                kMinValueCharsLen, results);
-  dictionary_->LookupPrefix(input_key, request, &callback);
+                                kMinValueCharsLen, input_key_len, results);
+  dictionary_->LookupPrefix(lookup_key, request, &callback);
   const size_t prefix_results_size = results->size() - prev_results_size;
   if (prefix_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);

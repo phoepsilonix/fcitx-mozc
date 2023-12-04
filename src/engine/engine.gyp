@@ -61,9 +61,9 @@
         '../base/absl.gyp:absl_status',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
-        '../converter/converter.gyp:converter',
-        '../converter/converter_base.gyp:connector',
-        '../converter/converter_base.gyp:segmenter',
+        '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
+        '<(mozc_oss_src_dir)/converter/converter_base.gyp:connector',
+        '<(mozc_oss_src_dir)/converter/converter_base.gyp:segmenter',
         '../dictionary/dictionary.gyp:dictionary_impl',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
@@ -92,6 +92,7 @@
         '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
         '../prediction/prediction.gyp:prediction',
         'engine',
+        'engine_builder'
       ],
     },
     {
@@ -106,6 +107,7 @@
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../request/request.gyp:conversion_request',
         'engine',
+        'engine_builder'
       ],
     },
     {
@@ -127,8 +129,8 @@
         'minimal_engine.cc',
       ],
       'dependencies': [
-        '../composer/composer.gyp:composer',
-        '../converter/converter.gyp:converter',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
         '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../protocol/protocol.gyp:config_proto',

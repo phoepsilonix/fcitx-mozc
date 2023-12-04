@@ -111,6 +111,7 @@
           'dependencies': [
             '<(mozc_src_dir)/base/base.gyp:base',
             'input_dll_import_lib',
+            'msctf_dll_import_lib',
           ],
         },
         {
@@ -151,7 +152,7 @@
             '<(mozc_src_dir)/config/config.gyp:config_handler',
             '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
             '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-            '<(mozc_src_dir)/session/session_base.gyp:key_info_util',
+            '<(mozc_oss_src_dir)/session/session_base.gyp:key_info_util',
           ],
         },
         {
@@ -184,6 +185,7 @@
           'dependencies': [
             '<(mozc_src_dir)/base/base.gyp:base',
             'imframework_util',
+            'msctf_dll_import_lib',
           ],
         },
         {

@@ -35,13 +35,13 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 
@@ -181,6 +181,13 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           new_candidate->rid = original_candidate->rid;
           new_candidate->attributes |=
               Segment::Candidate::NO_VARIANTS_EXPANSION;
+          if (original_candidate->attributes &
+              Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+            new_candidate->attributes |=
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+            new_candidate->consumed_key_size =
+                original_candidate->consumed_key_size;
+          }
         }
       }
     } else if (IsEnglishCandidate(original_candidate)) {

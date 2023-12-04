@@ -43,8 +43,8 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
-#include "converter/lattice.h"
 #include "absl/strings/string_view.h"
+#include "converter/lattice.h"
 
 #ifndef NDEBUG
 #define MOZC_CANDIDATE_DEBUG
@@ -277,6 +277,7 @@ class Segment final {
       absl::string_view GetContentValue() const;
       absl::string_view GetFunctionalKey() const;
       absl::string_view GetFunctionalValue() const;
+      size_t GetIndex() const { return index_; }
 
      private:
       const Candidate *candidate_;

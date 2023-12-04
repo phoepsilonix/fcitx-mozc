@@ -44,27 +44,27 @@
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/stopwatch.h"
-#include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
-#include "engine/engine_builder_interface.h"
+#include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/engine_builder.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "usage_stats/usage_stats.h"
+#include "absl/flags/flag.h"
+#include "absl/random/random.h"
+#include "absl/time/time.h"
+#include "composer/table.h"
 #include "session/common.h"
 #include "session/internal/keymap.h"
 #include "session/session.h"
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
-#include "usage_stats/usage_stats.h"
-#include "absl/flags/flag.h"
-#include "absl/random/random.h"
-#include "absl/time/time.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"
@@ -133,18 +133,16 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
 }  // namespace
 
 SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine) {
-  Init(std::move(engine), std::unique_ptr<EngineBuilderInterface>());
+  Init(std::move(engine), std::unique_ptr<EngineBuilder>());
 }
 
-SessionHandler::SessionHandler(
-    std::unique_ptr<EngineInterface> engine,
-    std::unique_ptr<EngineBuilderInterface> engine_builder) {
+SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine,
+                               std::unique_ptr<EngineBuilder> engine_builder) {
   Init(std::move(engine), std::move(engine_builder));
 }
 
-void SessionHandler::Init(
-    std::unique_ptr<EngineInterface> engine,
-    std::unique_ptr<EngineBuilderInterface> engine_builder) {
+void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
+                          std::unique_ptr<EngineBuilder> engine_builder) {
   is_available_ = false;
   max_session_size_ = 0;
   last_session_empty_time_ = Clock::GetAbslTime();

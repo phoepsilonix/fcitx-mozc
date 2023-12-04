@@ -43,13 +43,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
-#include "converter/converter_mock.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -63,7 +57,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -74,6 +67,13 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/table.h"
+#include "converter/converter_interface.h"
+#include "converter/converter_mock.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segments.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace prediction {
@@ -480,11 +480,11 @@ class DictionaryPredictionAggregatorTest
         }));
     EXPECT_CALL(*mock, LookupPrefix(StrEq("ぐーぐる"), _, _))
         .WillRepeatedly(InvokeCallbackWithKeyValues({
-            {"グーグル", "グーグル"},
+            {"ぐーぐる", "グーグル"},
         }));
     EXPECT_CALL(*mock, LookupPrefix(StrEq("あどせんす"), _, _))
         .WillRepeatedly(InvokeCallbackWithKeyValues({
-            {"アドセンス", "アドセンス"},
+            {"あどせんす", "アドセンス"},
         }));
     EXPECT_CALL(*mock, LookupPrefix(StrEq("てすと"), _, _))
         .WillRepeatedly(InvokeCallbackWithKeyValues({
@@ -2376,6 +2376,28 @@ TEST_F(DictionaryPredictionAggregatorTest, EnrichPartialCandidates) {
   std::vector<Result> results;
   EXPECT_TRUE(PREFIX & aggregator.AggregatePredictionForRequest(
                            *prediction_convreq_, segments, &results));
+}
+
+TEST_F(DictionaryPredictionAggregatorTest, PrefixCandidates) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  Segments segments;
+  SetUpInputForSuggestion("ぐーぐるあ", composer_.get(), &segments);
+
+  std::vector<Result> results;
+  EXPECT_TRUE(PREFIX & aggregator.AggregatePredictionForRequest(
+                           *prediction_convreq_, segments, &results));
+  for (const auto &r : results) {
+    if (r.types == PREFIX) {
+      EXPECT_TRUE(r.candidate_attributes &
+                  Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+      EXPECT_NE(r.consumed_key_size, 0);
+    }
+  }
 }
 
 TEST_F(DictionaryPredictionAggregatorTest, CandidatesFromUserDictionary) {

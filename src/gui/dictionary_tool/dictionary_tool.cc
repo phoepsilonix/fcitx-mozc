@@ -414,8 +414,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       GetTableHeight(dic_content_));
 
   // Get a list of POS and set a custom delagate that holds the list.
-  std::vector<std::string> tmp_pos_vec;
-  pos_list_provider_->GetPosList(&tmp_pos_vec);
+  const std::vector<std::string> tmp_pos_vec = pos_list_provider_->GetPosList();
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
     pos_list.append(QUtf8(tmp_pos_vec[i]));
@@ -423,11 +422,10 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   ComboBoxDelegate *delegate = new ComboBoxDelegate;
   delegate->SetItemList(pos_list);
   dic_content_->setItemDelegateForColumn(2, delegate);
-  if (!pos_list.isEmpty()) {
-    default_pos_ = pos_list[0];
-  } else {
-    LOG(WARNING) << "No POS is given.";
-  }
+
+  // Set the default POS. It should be "名詞".
+  default_pos_ = pos_list[pos_list_provider_->GetPosListDefaultIndex()];
+  DCHECK(default_pos_ == "名詞") << "The default POS is not 名詞";
 
   // Set up the main table widget for dictionary contents.
   dic_content_->setColumnCount(4);
@@ -1318,8 +1316,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
 
   menu->addSeparator();
   QMenu *change_category_to = menu->addMenu(tr("Change category to"));
-  std::vector<std::string> pos_list;
-  pos_list_provider_->GetPosList(&pos_list);
+  const std::vector<std::string> pos_list = pos_list_provider_->GetPosList();
   std::vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] = change_category_to->addAction(QUtf8(pos_list[i]));

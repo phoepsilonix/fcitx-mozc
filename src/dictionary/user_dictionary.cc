@@ -161,6 +161,8 @@ class UserDictionary::TokensIndex {
       if (!dic.enabled() || dic.entries_size() == 0) {
         continue;
       }
+      const bool is_android_shortcuts =
+          (dic.name() == "__auto_imported_android_shortcuts_dictionary");
 
       for (const UserDictionaryStorage::UserDictionaryEntry &entry :
            dic.entries()) {
@@ -215,6 +217,13 @@ class UserDictionary::TokensIndex {
               absl::StripAsciiWhitespace(entry.comment());
           for (auto &token : tokens) {
             strings::Assign(token.comment, comment);
+            if (is_android_shortcuts &&
+                token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
+              // TODO(b/295964970): This special implementation is planned to be
+              // removed after validating the safety of NO_POS implementation.
+              token.remove_attribute(UserPos::Token::SUGGESTION_ONLY);
+              token.add_attribute(UserPos::Token::SHORTCUT);
+            }
             user_pos_tokens_.push_back(std::move(token));
           }
         }
@@ -575,9 +584,7 @@ bool UserDictionary::Load(
 }
 
 std::vector<std::string> UserDictionary::GetPosList() const {
-  std::vector<std::string> pos_list;
-  user_pos_->GetPosList(&pos_list);
-  return pos_list;
+  return user_pos_->GetPosList();
 }
 
 void UserDictionary::SetUserDictionaryName(const absl::string_view filename) {

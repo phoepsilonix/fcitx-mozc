@@ -43,7 +43,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -54,6 +53,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {
@@ -150,6 +150,7 @@ void GetRewriteCandidateInfos(
     std::vector<RewriteCandidateInfo> *rewrite_candidate_info) {
   DCHECK(rewrite_candidate_info);
   RewriteCandidateInfo info;
+  constexpr int kMaxLenForPhoneticNumber = 6;  // "100000" (じゅうまん)
 
   // Use the higher ranked candidate for deciding the insertion position.
   absl::flat_hash_set<std::string> seen;
@@ -159,6 +160,16 @@ void GetRewriteCandidateInfos(
     if (type == NO_REWRITE) {
       continue;
     }
+
+    // Skip expanding number variation for large number for phonetic number
+    // candidates. Generating "100000000" for the key "いちおく" would be noisy.
+    const bool is_base_phonetic =
+        (Util::GetFirstScriptType(info.candidate.key) != Util::NUMBER);
+    if (is_base_phonetic &&
+        Util::CharsLen(info.candidate.value) > kMaxLenForPhoneticNumber) {
+      continue;
+    }
+
     if (seen.insert(info.candidate.value).second) {
       info.type = type;
       info.position = i;
