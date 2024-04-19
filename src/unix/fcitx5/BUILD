@@ -27,7 +27,6 @@ mozc_cc_library(
     hdrs = ["mozc_client_pool.h"],
     deps = [
         ":mozc_connection",
-        "@fcitx5//:fcitx5",
     ]
 )
 
@@ -59,7 +58,6 @@ mozc_cc_library(
         "//base:vlog",
         "//protocol:commands_cc_proto",
         "//client:client_interface",
-        "@fcitx5//:fcitx5",
     ],
 )
 
@@ -80,7 +78,6 @@ mozc_cc_library(
         "//base:singleton",
         "//protocol:config_cc_proto",
         "//protocol:commands_cc_proto",
-        "@fcitx5//:fcitx5",
     ],
 )
 
@@ -97,7 +94,6 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "//base:vlog",
-        "@fcitx5//:fcitx5",
     ],
 )
 
@@ -112,4 +108,3 @@ mozc_cc_binary(
     linkstatic = 1,
     linkshared = 1,
 )
-
