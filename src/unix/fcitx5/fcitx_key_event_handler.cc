@@ -30,12 +30,15 @@
 
 #include "unix/fcitx5/fcitx_key_event_handler.h"
 
+#include <fcitx-utils/charutils.h>
 #include <fcitx-utils/key.h>
+#include <fcitx-utils/utf8.h>
 
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <set>
+#include <string>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -122,6 +125,24 @@ bool KeyEventHandler::GetKeyEvent(
   }
 
   return ProcessModifiers(is_key_up, keyval, key);
+}
+
+bool KeyEventHandler::GetKeyEvent(
+    const std::string &composeString,
+    mozc::config::Config::PreeditMethod preedit_method, bool layout_is_jp,
+    mozc::commands::KeyEvent *key) {
+  key->Clear();
+  auto length = utf8::length(composeString);
+  if (length == 1) {
+    auto chr = utf8::getChar(composeString);
+    // For ascii key & yen, use the regular key event conversion.
+    if ((chr >= 0x20 && chr <= 0x7e) || chr == 0xa5) {
+      return GetKeyEvent(static_cast<KeySym>(chr), 0, KeyStates(),
+                         preedit_method, layout_is_jp, false, key);
+    }
+  }
+  key->set_key_string(composeString);
+  return true;
 }
 
 void KeyEventHandler::Clear() {

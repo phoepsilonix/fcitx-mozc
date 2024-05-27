@@ -112,10 +112,7 @@ class MozcState : public InputContextProperty {
   // response is stored on 'out' (and 'out_error' is not modified). If the IPC
   // fails, returns false and the error message is stored on 'out_error'. In
   // this case, 'out' is not modified.
-  bool TrySendKeyEvent(InputContext *ic, KeySym sym, uint32_t keycode,
-                       KeyStates state,
-                       mozc::commands::CompositionMode composition_mode,
-                       bool layout_is_jp, bool is_key_up,
+  bool TrySendKeyEvent(InputContext *ic, const mozc::commands::KeyEvent &event,
                        mozc::commands::Output *out,
                        std::string *out_error) const;
 
