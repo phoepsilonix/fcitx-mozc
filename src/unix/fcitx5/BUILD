@@ -82,7 +82,6 @@ mozc_cc_library(
         "fcitx_key_translator.h",
     ],
     deps = [
-        "//base:logging",
         "//base:port",
         "//base:vlog",
         "//base:singleton",
@@ -102,7 +101,6 @@ mozc_cc_library(
     ],
     deps = [
         "//base:util",
-        "//base:logging",
         "//base:port",
         "//base:vlog",
         "@fcitx5//:fcitx5",
